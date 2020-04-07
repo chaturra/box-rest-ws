@@ -3,6 +3,10 @@ package com.anz.ws.controller;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +19,8 @@ import com.anz.ws.response.model.ServiceResponse;
 import com.anz.ws.service.CreateAppUserService;
 import com.anz.ws.service.CreateCollaborationService;
 import com.anz.ws.service.CreateFolderService;
+import com.anz.ws.service.JwtUtil;
+import com.anz.ws.service.UserAuthenticationService;
 import com.box.sdk.BoxAPIResponseException;
 
 @RestController
@@ -29,6 +35,15 @@ public class UserController {
 
 	@Autowired
 	CreateCollaborationService colServ;
+	
+	@Autowired
+	private AuthenticationManager authManager;
+	
+	@Autowired 
+	private UserAuthenticationService userAuthService;
+	
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@GetMapping("/")
 	public String health() {
@@ -58,6 +73,18 @@ public class UserController {
 		}
 		return servRes;
 
+	}
+	
+	@PostMapping("/authenticate")
+	public ResponseEntity<?> createAuthentication(@RequestBody AuthenticationRequest req) throws Exception {
+		
+		authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
+		final UserDetails userDetails= userAuthService.loadUserByUsername(req.getUsername());
+		
+		final String jwtToken=jwtUtil.generateToken(userDetails);
+		
+		return ResponseEntity.ok(new AuthenticationResponse(jwtToken));
+		
 	}
 
 }

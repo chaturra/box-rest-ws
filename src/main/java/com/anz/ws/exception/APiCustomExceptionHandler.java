@@ -10,11 +10,27 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import com.box.sdk.BoxAPIResponseException;
 
+import io.jsonwebtoken.JwtException;
+
 import com.anz.ws.response.model.ErrorResponse;
 
 @Controller
 @ControllerAdvice
 public class APiCustomExceptionHandler {
+	
+	@ExceptionHandler(JwtException.class)
+	public ResponseEntity<ErrorResponse> JwtException(JwtException ex, WebRequest request)
+	{
+		ErrorResponse errRes = new ErrorResponse();
+		errRes.setTimestamp(new Date());
+		errRes.setStatus("401");
+		errRes.setError("Authorization Error");
+		errRes.setMessage(ex.getMessage());
+	    errRes.setLocation("Jwt");
+	       
+	    return new ResponseEntity<>(errRes, HttpStatus.NON_AUTHORITATIVE_INFORMATION);
+		
+	}
 	
 	@ExceptionHandler(Exception.class)
 	  public ResponseEntity<ErrorResponse> handleServerException(Exception ex, WebRequest request) {
@@ -29,6 +45,7 @@ public class APiCustomExceptionHandler {
 	    return new ResponseEntity<>(errRes, HttpStatus.INTERNAL_SERVER_ERROR);
 	  }
 	
+
 	
 	@ExceptionHandler(BoxAPIResponseException.class)
 	  public ResponseEntity<ErrorResponse> handleBoxAPIResponseException(Exception ex, WebRequest request) {
@@ -42,6 +59,8 @@ public class APiCustomExceptionHandler {
 	       
 	    return new ResponseEntity<>(errRes, HttpStatus.INTERNAL_SERVER_ERROR);
 	  }
+	
+	
 
 
 }
